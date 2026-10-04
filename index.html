@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قائمة الطعام</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cairo',sans-serif;background:#f8f6e8;color:#222}
+.header{background:linear-gradient(135deg,#18204f,#27306b);color:#fff;text-align:center;padding:35px 15px 30px;border-radius:0 0 30px 30px;box-shadow:0 5px 20px rgba(0,0,0,.15)}
+.header h1{margin:0;font-size:30px;font-weight:800;color:#f4d84a}.header:after{content:'';display:block;width:90px;height:4px;background:#f4d84a;border-radius:10px;margin:16px auto 0}.header p{margin:7px 0 0;opacity:.9}
+.tabs{display:flex;justify-content:center;gap:10px;padding:20px 15px 10px}
+.tab{border:none;padding:12px 25px;border-radius:30px;background:#fff;color:#777;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.08);transition:.3s}
+.tab:hover{transform:translateY(-2px)}.tab.active{background:#18204f;color:#f4d84a}
+.menu-container{max-width:900px;margin:auto;padding:10px 15px 120px}
+.section{display:none;animation:fadeIn .4s ease}.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.menu-item{background:#fff;border-right:5px solid #f4d84a;margin:12px 0;padding:17px;border-radius:18px;display:flex;align-items:center;justify-content:space-between;gap:15px;box-shadow:0 3px 15px rgba(0,0,0,.07);transition:.3s}
+.menu-item:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.item-info{flex:1}.item-name{font-size:18px;font-weight:700}.item-price{color:#18204f;font-weight:800;margin-top:3px}
+.quantity{display:flex;align-items:center;gap:8px}.quantity button{width:36px;height:36px;border:none;border-radius:50%;background:#18204f;color:#f4d84a;color:#fff;font-size:20px;cursor:pointer;transition:.2s}.quantity button:active{transform:scale(.9)}
+.quantity span{min-width:25px;text-align:center;font-weight:800}
+.cart{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 30px);max-width:500px;background:#222;color:#fff;border-radius:20px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:100;cursor:pointer;transition:.3s}
+.cart:hover{transform:translateX(-50%) translateY(-3px)}.cart-info{display:flex;flex-direction:column}.cart-count{font-size:13px;opacity:.75}.cart-total{font-size:19px;font-weight:800}.cart-button{background:#25D366;color:#fff;border:none;padding:10px 18px;border-radius:12px;font-family:inherit;font-weight:700}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center}.modal.show{display:flex}
+.modal-box{background:#fff;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;border-radius:25px 25px 0 0;padding:25px;animation:slideUp .35s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center}.modal-header h2{margin:0}.close{border:none;background:#eee;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:20px}
+.order-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}.order-total{font-size:20px;font-weight:800;margin:20px 0}
+.customer-input{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;font-family:inherit;margin-bottom:10px;outline:none}.customer-input:focus{border-color:#18204f}
+.whatsapp{width:100%;padding:15px;border:none;border-radius:14px;background:#25D366;color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer}.empty{text-align:center;color:#888;padding:30px}
+</style>
+</head>
+<body>
+
+<header class="header">
+<h1>قائمة الطعام</h1>
+<p>اختار طلبك وأرسله مباشرة عبر واتساب</p>
+</header>
+
+<div class="tabs">
+<button class="tab active" onclick="showSection('manakish',this)">🫓 المناقيش</button>
+<button class="tab" onclick="showSection('drinks',this)">🥤 المشروبات</button>
+</div>
+
+<div class="menu-container">
+<section id="manakish" class="section active"><div id="manakishList"></div></section>
+<section id="drinks" class="section"><div id="drinksList"></div></section>
+</div>
+
+<div class="cart" onclick="openCart()">
+<div class="cart-info"><span class="cart-count" id="cartCount">0 أصناف</span><span class="cart-total" id="cartTotal">0 ل.ل</span></div>
+<button class="cart-button">عرض الطلب 🛒</button>
+</div>
+
+<div class="modal" id="cartModal" onclick="closeOutside(event)">
+<div class="modal-box">
+<div class="modal-header"><h2>طلبك 🛒</h2><button class="close" onclick="closeCart()">×</button></div>
+<div id="orderList"></div>
+<div class="order-total">المجموع: <span id="modalTotal">0</span> ل.ل</div>
+<input class="customer-input" id="customerName" type="text" placeholder="اسم الزبون">
+<input class="customer-input" id="customerNote" type="text" placeholder="ملاحظات على الطلب (اختياري)">
+<button class="whatsapp" onclick="sendWhatsApp()">إرسال الطلب عبر واتساب 📱</button>
+</div>
+</div>
+
+<script>
+/* عدّل الأصناف والأسعار من هنا */
+const MENU={
+manakish:[
+{name:"جريش سادة",price:40},
+{name:"كعك العباس",price:100},
+{name:"جبنة",price:200},
+{name:"جبنة زيادة",price:300},
+{name:"زعتر",price:80},
+{name:"بندورة و بصل",price:100},
+{name:"كشك",price:120},
+{name:"بندورة و جبنة",price:200},
+{name:"كشك و جبنة",price:200},
+{name:"كوكتيل (جبنة عليها زعتر)",price:250}
+],
+drinks:[
+{name:"شاي",price:40},
+{name:"بيبسي",price:70},
+{name:"لبن",price:70},
+{name:"ماء صغير",price:25},
+{name:"بون جوس",price:25}
+]
+};
+
+let cart={};
+
+function renderMenu(){renderCategory("manakish","manakishList");renderCategory("drinks","drinksList")}
+
+function renderCategory(category,elementId){
+const container=document.getElementById(elementId);container.innerHTML="";
+MENU[category].forEach((item,index)=>{
+const key=category+"_"+index;const quantity=cart[key]||0;
+container.innerHTML+=`<div class="menu-item"><div class="item-info"><div class="item-name">${item.name}</div><div class="item-price">${item.price.toLocaleString()} ل.ل</div></div><div class="quantity"><button onclick="changeQuantity('${category}',${index},-1)">−</button><span>${quantity}</span><button onclick="changeQuantity('${category}',${index},1)">+</button></div></div>`;
+});
+}
+
+function changeQuantity(category,index,amount){
+const key=category+"_"+index;cart[key]=(cart[key]||0)+amount;if(cart[key]<=0)delete cart[key];renderMenu();updateCart();
+}
+
+function updateCart(){
+let count=0,total=0;
+Object.keys(cart).forEach(key=>{
+const [category,index]=key.split("_");const item=MENU[category][Number(index)];
+count+=cart[key];total+=item.price*cart[key];
+});
+document.getElementById("cartCount").innerText=count+(count===1?" صنف":" أصناف");
+document.getElementById("cartTotal").innerText=total.toLocaleString()+" ل.ل";
+}
+
+function openCart(){
+const orderList=document.getElementById("orderList");orderList.innerHTML="";
+let total=0,hasItems=false;
+Object.keys(cart).forEach(key=>{
+const [category,index]=key.split("_");const item=MENU[category][Number(index)];const quantity=cart[key];const subtotal=item.price*quantity;
+hasItems=true;total+=subtotal;
+orderList.innerHTML+=`<div class="order-row"><span>${item.name} × ${quantity}</span><strong>${subtotal.toLocaleString()} ل.ل</strong></div>`;
+});
+if(!hasItems)orderList.innerHTML='<div class="empty">السلة فارغة 🛒</div>';
+document.getElementById("modalTotal").innerText=total.toLocaleString();
+document.getElementById("cartModal").classList.add("show");
+}
+
+function closeCart(){document.getElementById("cartModal").classList.remove("show")}
+function closeOutside(event){if(event.target.id==="cartModal")closeCart()}
+
+function showSection(section,button){
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.getElementById(section).classList.add("active");
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+button.classList.add("active");
+}
+
+function sendWhatsApp(){
+if(Object.keys(cart).length===0){alert("السلة فارغة، أضف طلباً أولاً.");return}
+let lines=["🛒 طلب جديد","━━━━━━━━━━━━━━"];let total=0;
+Object.keys(cart).forEach(key=>{
+const [category,index]=key.split("_");const item=MENU[category][Number(index)];const quantity=cart[key];const subtotal=item.price*quantity;total+=subtotal;
+lines.push("• "+item.name+" × "+quantity+" = "+subtotal.toLocaleString()+" ل.ل");
+});
+lines.push("━━━━━━━━━━━━━━");
+const name=document.getElementById("customerName").value.trim();
+const note=document.getElementById("customerNote").value.trim();
+if(name)lines.push("👤 الاسم: "+name);
+if(note)lines.push("📝 ملاحظات: "+note);
+lines.push("💰 المجموع: "+total.toLocaleString()+" ل.ل");
+
+const phone="96170507804";
+window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
+}
+
+renderMenu();updateCart();
+</script>
+</body>
+</html>
